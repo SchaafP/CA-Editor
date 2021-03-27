@@ -1,0 +1,31 @@
+#pragma kernel GameOfLife
+float f[512];	// transition-function
+float Width;	// width of texture
+float Height;	// height of texture
+sampler2D Input;
+RWTexture2D<float4> Result;
+
+[numthreads(8,8,1)]
+void GameOfLife (uint3 id : SV_DispatchThreadID)
+{	
+	
+	float2 position  = float2((id.x) / Width, (id.y) / Height);
+	float2 pixelSize = float2(1.0 / Width, 1.0 / Height);
+	
+	float4 index = 0;
+	index += 1   * (tex2Dlod(Input, float4(position.x - pixelSize.x, position.y - pixelSize.y, 0, 0)));
+	index += 2   * (tex2Dlod(Input, float4(position.x              , position.y - pixelSize.y, 0, 0)));
+	index += 4   * (tex2Dlod(Input, float4(position.x + pixelSize.x, position.y - pixelSize.y, 0, 0)));
+
+	index += 8   * (tex2Dlod(Input, float4(position.x - pixelSize.x, position.y              , 0, 0)));
+	index += 16  * (tex2Dlod(Input, float4(position.x              , position.y              , 0, 0)));
+	index += 32  * (tex2Dlod(Input, float4(position.x + pixelSize.x, position.y              , 0, 0)));
+
+	index += 64  * (tex2Dlod(Input, float4(position.x - pixelSize.x, position.y + pixelSize.y, 0, 0)));
+	index += 128 * (tex2Dlod(Input, float4(position.x              , position.y + pixelSize.y, 0, 0)));
+	index += 256 * (tex2Dlod(Input, float4(position.x + pixelSize.x, position.y + pixelSize.y, 0, 0)));
+
+	uint nexState   = f[index.r];
+	Result[id.xy] = float4(nexState, nexState, nexState, 1);
+	
+}
